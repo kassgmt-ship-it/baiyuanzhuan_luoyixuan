@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>白猿传 - 唐代传奇互动游戏</title>
+    <!-- 使用CDN确保外部资源在任何环境都能访问 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B4513',
+                        secondary: '#D2B48C',
+                        accent: '#CD853F',
+                        dark: '#2C1E1E',
+                        light: '#F5F5DC'
+                    },
+                    fontFamily: {
+                        ancient: ['"Ma Shan Zheng"', 'cursive', 'sans-serif'],
+                        story: ['"Noto Serif SC"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            .bg-texture {
+                background-image: url('https://picsum.photos/id/106/1000/1000');
+                background-size: cover;
+                background-blend-mode: overlay;
+                background-attachment: fixed;
+            }
+            .character-card {
+                transition: all 0.3s ease;
+            }
+            .character-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            }
+            .fade-in {
+                animation: fadeIn 1s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .pulse-effect {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        }
+    </style>
+    <!-- 确保字体资源正确加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light bg-texture text-dark min-h-screen">
+    <!-- 游戏容器 -->
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- 游戏标题 -->
+        <header class="text-center mb-8 fade-in">
+            <h1 class="font-ancient text-[clamp(2.5rem,5vw,4rem)] text-primary text-shadow mb-2">白猿传</h1>
+            <p class="font-story text-lg text-dark/80 italic">唐代传奇 · 忠实原著</p>
+        </header>
+
+        <!-- 开始游戏页面 -->
+        <div id="start-screen" class="fade-in text-center max-w-3xl mx-auto">
+            <div class="bg-white/90 rounded-lg overflow-hidden shadow-xl border border-primary/30 mb-8">
+                <div class="h-64 md:h-80 overflow-hidden">
+                    <img src="https://picsum.photos/id/1074/800/600" alt="欧阳纥将军画像，身着古代铠甲，神情坚毅" class="w-full h-full object-cover">
+                </div>
+                <div class="p-8">
+                    <h2 class="font-ancient text-3xl md:text-4xl text-primary mb-6">你将化身欧阳纥</h2>
+                    <p class="font-story text-lg mb-6 text-left">
+                        南朝梁将领，奉命南征，你的妻子被神秘白猿掳走。<br>
+                        你必须踏上艰险的寻妻之路，面对未知的危险，<br>
+                        用你的勇气与智慧，夺回挚爱，谱写属于你的传奇！
+                    </p>
+                    <button id="start-btn" class="pulse-effect bg-primary hover:bg-primary/90 text-light py-4 px-10 rounded-lg font-ancient text-xl transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fa fa-arrow-right mr-2"></i>点击这里开始游戏
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 (初始隐藏) -->
+        <div id="game-area" class="hidden">
+            <!-- 游戏状态面板 -->
+            <div id="status-panel" class="bg-white rounded-lg bg-secondary/80 p-4 mb-6 shadow-md flex flex-wrap justify-between items-center">
+                <div class="mb-3 md:mb-0">
+                    <p class="font-story"><i class="fa fa-user mr-2"></i>角色: <span id="player-character">欧阳纥</span></p>
+                </div>
+                <div class="mb-3 md:mb-0">
+                    <p class="font-story"><i class="fa fa-bookmark mr-2"></i>章节: <span id="chapter">开端</span></p>
+                </div>
+                <div class="flex space-x-6">
+                    <p class="font-story"><i class="fa fa-bolt mr-2"></i>勇气: <span id="courage" class="font-bold">70</span></p>
+                    <p class="font-story"><i class="fa fa-lightbulb-o mr-2"></i>智谋: <span id="wisdom" class="font-bold">60</span></p>
+                    <p class="font-story"><i class="fa fa-heart mr-2"></i>情义: <span id="affection" class="font-bold">90</span></p>
+                </div>
+            </div>
+
+            <!-- 故事展示区 -->
+            <div id="story-container" class="bg-light/90 rounded-lg p-6 mb-6 shadow-lg border border-primary/30 min-h-[300px] font-story text-lg">
+                <div id="story-text" class="fade-in">
+                    <!-- 故事内容将在这里动态显示 -->
+                </div>
+            </div>
+
+            <!-- 选择按钮区 -->
+            <div id="choices-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <!-- 选择按钮将在这里动态生成 -->
+            </div>
+
+            <!-- 图片展示区 -->
+            <div id="image-container" class="mb-6 hidden">
+                <img id="story-image" src="" alt="" class="w-full h-64 object-cover rounded-lg shadow-md">
+            </div>
+        </div>
+
+        <!-- 结局展示区 (初始隐藏) -->
+        <div id="ending-area" class="hidden">
+            <div class="bg-light/90 rounded-lg p-8 shadow-lg border border-primary/30 text-center">
+                <h2 id="ending-title" class="font-ancient text-3xl text-primary mb-6"></h2>
+                <div id="ending-text" class="font-story text-lg mb-8"></div>
+                <button id="restart-btn" class="bg-primary hover:bg-primary/90 text-light py-3 px-8 rounded-lg font-story text-lg transition-colors duration-300">
+                    <i class="fa fa-refresh mr-2"></i>重新开始
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            character: 'ouyanghe',
+            chapter: "开端",
+            courage: 70,
+            wisdom: 60,
+            affection: 90,
+            flags: {}
+        };
+
+        // 欧阳纥的故事线数据
+        const ouyangheStory = {
+            "开端": {
+                text: `
+                    <p class="mb-4">南朝梁大同末年，朝廷派遣平南将军蔺钦南征，至桂林，攻破李师古、陈彻叛军。你作为别将，领兵攻略至长乐，平定诸洞，深入险阻之地。</p>
+                    <p>你的妻子容貌纤丽白皙，极为美丽。部下进言："将军为何携带美人行经此地？此地方有怪物，善于偷窃少女，尤其美丽者更难幸免，应当谨慎保护。"</p>
+                    <p class="mb-4">你闻言甚为疑惧，当夜便部署士兵环绕房舍守卫，将妻子藏匿于密室之中，门户紧闭极为牢固，并派十余名女奴看守。</p>
+                    <p>那夜，阴雨连绵，天色晦暗，至五更时分，四周寂静无声。守卫者倦怠而打瞌睡，忽然若有物惊扰，醒来时，你的妻子已然失踪。门户扃锁如旧，无人知其如何离去。</p>
+                    <p class="mt-4">出门便是险峻山路，咫尺之间便令人迷惑，无法追寻。待至天明，已全然不见踪迹。你悲愤痛惜，立誓不寻回妻子绝不返回。</p>
+                `,
+                image: "https://picsum.photos/id/15/800/400",
+                choices: [
+                    {
+                        text: '<i class="fa fa-horn mr-2"></i>立即率领士兵，进山搜寻',
+                        next: "立即进兵",
+                        courage: 10,
+                        wisdom: -5
+                    },
+                    {
+                        text: '<i class="fa fa-search mr-2"></i>先调查白猿行踪，从长计议',
+                        next: "调查行踪",
+                        wisdom: 10,
+                        courage: -5
+                    }
+                ]
+            },
+            
+            "立即进兵": {
+                text: `
+                    <p class="mb-4">你当即称病，驻军不前，每日前往四方边远之地，深入险境搜寻妻子。过了一个月，忽然在百里之外的草丛上，发现妻子的一只绣鞋，虽被雨水浸湿，仍可辨认。</p>
+                    <p>你更为悲凄，搜寻之心愈发坚定。挑选三十名壮士，携带兵器粮食，在岩穴栖息，于野外觅食。又过了十余日，在距离宿营地约二百里之处，向南望见一座山，青翠秀丽，高出其他山峰。</p>
+                    <p class="mb-4">至山下，有深溪环绕，你率众人编木为筏得以渡过。在陡峭的岩石与翠绿的竹林之间，不时见到红色光彩，听到笑语之声。</p>
+                    <p>众人攀援藤蔓，牵引绳索，登上山去，只见嘉树排列种植，间杂名花，其下绿草如茵，丰软如毯。此地清幽高远，寂静无人，宛如仙境。有一座向东的石门，数十名妇人衣着鲜艳，在其中嬉游歌笑，出入往来。</p>
+                    <p class="mt-4">妇人见人都轻慢地注视，迟疑伫立。待你们走近，便问道："为何来到此地？"</p>
+                `,
+                image: "https://picsum.photos/id/29/800/400",
+                choices: [
+                    {
+                        text: '<i class="fa fa-user mr-2"></i>如实相告，请求协助',
+                        next: "妇人相助",
+                        wisdom: 5,
+                        affection: 5
+                    },
+                    {
+                        text: '<i class="fa fa-bomb mr-2"></i>怀疑有诈，强行入洞搜查',
+                        next: "强行入洞",
+                        courage: 10,
+                        wisdom: -10
+                    }
+                ]
+            },
+            
+            "妇人相助": {
+                text: `
+                    <p class="mb-4">你将妻子被掳之事一一告知。妇人们相视叹息道："贤妻来到此地已有一月有余，如今正卧病在床，应当派人去探望。"</p>
+                    <p>进入石门，以木为门扉，内有三间宽敞如厅堂的房室，四壁设有床榻，都铺着锦缎垫褥。你的妻子卧于石榻上，身下垫着多层褥席，珍贵食品摆满面前。</p>
+                    <p class="mb-4">你上前探望，妻子回眸看了你一眼，立即急忙挥手令你离去。</p>
+                    <p>诸妇人解释道："我们与您的妻子，在此最久的已有十年。这是神物居住之地，其力能杀人，即使百名武士手持兵器，也无法制服。幸好它尚未返回，您应迅速避开。只要求您带来美酒两斛、食用犬十头、麻数十斤，我们当共同谋划杀它。"</p>
+                    <p class="mb-4">妇人们又说："它来必在正午之后，千万不要太早。以十日为期。"随即催促你离去。你也急忙退出。</p>
+                    <p>于是你寻来醇酒、麻与犬，如期前往。妇人说："此物好酒，往往饮至大醉。醉后必定逞力，使我们用彩绢将其手足缚于床上，它一踊便可挣断。曾经用三幅绢缝制，它也能用力挣开。如今将麻隐藏于帛中束缚它，料想它无法挣脱了。"</p>
+                    <p class="mt-4">妇人又说："它遍体坚硬如铁，唯有脐下数寸之处，常加以遮蔽，此处必不能抵御兵刃。"又指着旁边一岩石说："这是它的粮仓，您当隐藏于此，静静等候。酒置于花下，犬散放林中。待我们计谋成功，招呼您时再出来。"</p>
+                `,
+                image: "https://picsum.photos/id/164/800/400",
+                choices: [
+                    {
+                        text: '<i class="fa fa-clock-o mr-2"></i>依计而行，正午之后行动',
+                        next: "诛杀白猿",
+                        wisdom: 10,
+                        courage: 5
+                    },
+                    {
+                        text: '<i class="fa fa-exclamation-triangle mr-2"></i>担心有变，提前行动',
+                        next: "计划败露",
+                        courage: 5,
+                        wisdom: -10
+                    }
+                ]
+            },
+            
+            "诛杀白猿": {
+                text: `
+                    <p class="mb-4">你依其所言，屏气等待。午后申时左右，有物如匹帛，从他山飞下，径直进入洞中。片刻之后，有一美髯丈夫身长六尺有余，身着白衣，手持拐杖，拥着众妇人而出。</p>
+                    <p>见了犬便惊视，腾身捉住，撕裂吸吮其血，饱食一顿。妇人们竞相用玉杯进酒，嬉笑甚欢。饮了数斗之后，便被扶入洞内。又听到嬉笑之声。</p>
+                    <p class="mb-4">过了许久，妇人出来招呼你，于是你手持兵器进入洞中。只见大白猿被缚住四足于床头，看见人便蜷缩身体，想要挣脱却不能，目光如电。</p>
+                    <p>众人竞相用兵刃刺它，如同刺中铁石。你刺向它脐下之处，立即刃入血出，血射如注。白猿于是大声叹道："这是天要杀我，岂是你们的能力所能做到的！然而你的妻子已怀孕，不要杀她的儿子，他将来会遇到圣帝，必定会光大其宗族。"</p>
+                    <p class="mb-4">言毕气绝而死。你搜查其藏所，宝器堆积甚多，珍贵食品琳琅满目，罗列于几案之上，凡人世间所珍视之物，无不齐备。有名香数斛，宝劒一双。</p>
+                    <p>被掳的妇人三十余人，都有绝世之色，其中被掳最久的已达十年，她们说色衰者必被带走，不知安置何处。这白猿独自行动，更无同类。</p>
+                    <p class="mt-4">你取了宝玉珍物及众妇人一同返回，其中还有知道自己家在何处的。你的妻子一年后生下一子，模样酷似白猿。后来你被陈武帝所杀。你素来与江总交好，江总喜爱你儿子聪慧过人，常收留养育，故得以免于难。你的儿子长大后，果然精通文学书法，闻名于当时。</p>
+                `,
+                image: "https://picsum.photos/id/235/800/400",
+                isEnding: true,
+                endingTitle: "诛杀白猿，妻儿保全"
+            },
+            
+            "计划败露": {
+                text: `
+                    <p class="mb-4">你心中不安，担心妇人之计不可靠，决定提前行动。未及正午，便带领士兵潜入洞中。此时白猿尚未返回，众妇人见之大惊失色："为何提前而来？时机未到，必败无疑！"</p>
+                    <p>话音未落，只听一阵狂风呼啸，白猿已返回洞中。见有外人入侵，勃然大怒，挣脱妇人阻拦，一声长啸，声震山谷。</p>
+                    <p class="mb-4">白猿遍体白毛，长数寸，虽未饮酒，却力大无穷。它纵身一跃，如电般扑向你的士兵，随手抓起一人便撕裂开来。其动作迅捷无比，众人兵器尚未举起，已有数人丧命。</p>
+                    <p>你挺枪迎战，白猿不闪不避，枪尖刺在其身上竟被弹回，如中铁石。白猿伸臂一抓，便夺过长枪，反手一甩，你被击出数丈之外，口吐鲜血。</p>
+                    <p class="mb-4">"不知天高地厚的凡人，竟敢闯我洞府！"白猿怒吼，"吾虽将有大难，也容不得尔等放肆！"</p>
+                    <p>它身形如飞，转眼间三十名壮士已伤亡过半。你挣扎起身，只见白猿抓起你的妻子，冷笑一声："念你妻已有身孕，今日暂且饶你性命！"说罢，便带着所有妇人，腾身而去，消失在云雾之中。</p>
+                    <p class="mt-4">你望着空荡荡的洞穴，悲痛欲绝，却无力追赶。收集残兵，狼狈返回，从此一蹶不振。后闻陈武帝起兵，你因心灰意冷，无心战事，兵败被诛。而你的妻子与儿子，终究杳无音信，成为千古之谜。</p>
+                `,
+                image: "https://picsum.photos/id/138/800/400",
+                isEnding: true,
+                endingTitle: "计划败露，功败垂成"
+            },
+            
+            "强行入洞": {
+                text: `
+                    <p class="mb-4">你见妇人们神色异样，怀疑其中有诈，认为她们与白猿是一伙的，当即喝令士兵强行入洞搜查。妇人们大惊失色，纷纷阻拦："不可！它即将归来，此时入洞必遭不测！"</p>
+                    <p>你不听劝告，率兵冲入石门。洞内三间厅堂宽敞明亮，四壁床榻铺着锦缎垫褥，果然见你的妻子卧于石榻之上。妻子见你闯入，脸色煞白，急忙挥手示意你退去，眼中满是恐惧。</p>
+                    <p class="mb-4">"吾乃来救你回家！"你大喊着上前，正要解开妻子，忽闻一阵狂风自洞外卷入，腥气扑鼻。</p>
+                    <p>只见一白猿身长六尺有余，遍体白毛，手持长剑，怒目而立。"区区凡人，竟敢擅闯吾之居所！"白猿声如洪钟，"吾虽为山神所诉，将有大限，也容不得尔等放肆！"</p>
+                    <p class="mb-4">说罢，白猿长剑舞动，寒光四射，环身如电飞，光圆若月。你的三十名壮士虽奋勇迎战，却如何是对手？转瞬间便死伤惨重。</p>
+                    <p>你挺枪与白猿大战，却被白猿一剑挑飞长枪，手腕被伤。白猿一把抓住你，掷于地上："念你妻腹中已有吾之子，今日不杀你，速速离去！再敢来犯，定取你性命！"</p>
+                    <p class="mt-4">你眼睁睁看着妻子被白猿带走，囚禁于后洞，自己却无能为力。只得带着残兵狼狈逃回，从此终日郁郁寡欢，不久便病逝于军中。你的妻子后来如何，无人知晓。</p>
+                `,
+                image: "https://picsum.photos/id/131/800/400",
+                isEnding: true,
+                endingTitle: "强行入洞，兵败将伤"
+            },
+            
+            "调查行踪": {
+                text: `
+                    <p class="mb-4">你强压怒火，决定先查明白猿底细再做打算。一面称病驻军，一面派士兵四处打探消息。</p>
+                    <p>数日后，士兵回报：此白猿已在山中盘踞百年，能言人语，身长六尺有余，遍体白毛，善使双剑，剑法高超，环身电飞，光圆若月。它白日能往返数千里，夜晚则返回洞中。</p>
+                    <p class="mb-4">更有当地老人说，白猿神通广大，饮食无常，喜食果栗，尤其嗜犬，常捕犬而饮其血。它居住之处常读木简，字若符篆，无人能识。每至晴日，或于洞前舞动双剑，技艺精妙无比。</p>
+                    <p>有猎人曾见其形貌："白衣曳杖，状若美髯丈夫，然遍身白毛，长数寸，实乃猳玃之类。其力能裂虎豹，寻常人近之即死。"</p>
+                    <p class="mb-4">又闻近日有山民传言，白猿似有忧虑，曾怆然自语："吾为山神所诉，将得死罪。"也曾向众灵祈求庇护，希望能免于难。</p>
+                    <p>上月月生魄之时，有人见其居住的石磴突然生火，焚毁了它常读的简书，白猿曾怅然自失道："吾已千岁而无子，今有子，死期至矣。"</p>
+                    <p class="mt-4">掌握了这些信息，你知道白猿虽强，却似有死期将近之兆，心中稍安，开始制定周密计划。</p>
+                `,
+                image: "https://picsum.photos/id/137/800/400",
+                choices: [
+                    {
+                        text: '<i class="fa fa-users mr-2"></i>联合其他将领，合力强攻',
+                        next: "合力强攻",
+                        courage: 5,
+                        wisdom: 5
+                    },
+                    {
+                        text: '<i class="fa fa-paper-plane mr-2"></i>按兵不动，等待白猿自败',
+                        next: "等待时机",
+                        wisdom: 10,
+                        courage: -5
+                    }
+                ]
+            },
+            
+            "合力强攻": {
+                text: `
+                    <p class="mb-4">你决定联合附近各路将领，共商征讨白猿之计。向诸将详述其事，众将皆怒，纷纷表示愿助一臂之力。于是集结数千人马，准备对白猿巢穴进行全面进攻。</p>
+                    <p>进攻之日，大军分三路进发：一路正面进攻，吸引白猿注意力；一路迂回至山后，切断其退路；你则亲率精锐，从正面强攻，直取巢穴核心。</p>
+                    <p class="mb-4">白猿闻警，竟毫无惧色，独自出洞迎敌，手持双剑，如入无人之境。其剑光闪烁，人马近之即亡，大军虽众，却难以抵挡。</p>
+                    <p>"区区凡人，也敢与吾抗衡！"白猿长啸，双剑舞动如飞，转眼间便杀伤数百人。正面进攻的军队阵脚大乱，几乎溃散。</p>
+                    <p class="mb-4">你见状，心急如焚，亲自擂鼓助威，激励士气。就在此时，迂回至山后的军队从白猿后方发起突袭，乱箭齐发。白猿虽身手敏捷，避开多数箭矢，却仍有几箭射中其背部，虽未深入，却也使其动作稍缓。</p>
+                    <p>你抓住时机，率精锐直冲洞口，恰遇几名妇人逃出，其中便有你的妻子。"夫君快走！它脐下有弱点！"妻子大喊。</p>
+                    <p class="mb-4">此时白猿已杀退追兵，怒不可遏地返回，见你欲带走其妻，更是狂怒。它甩开众人，直扑你而来。你早有准备，张弓搭箭，瞄准白猿脐下，奋力一箭射去。</p>
+                    <p>白猿惨叫一声，中箭倒地，怒视你："吾命当绝，非尔之功！吾子必兴！"言毕气绝。</p>
+                    <p class="mt-4">你救下妻子及众妇人，收缴洞中珍宝而归。你的妻子后来生下一子，状貌类猿，聪慧过人。后你虽被陈武帝所诛，但此子为江总所救，长大后果然以文学书法闻名于世。</p>
+                `,
+                image: "https://picsum.photos/id/237/800/400",
+                isEnding: true,
+                endingTitle: "合力强攻，诛杀白猿"
+            },
+            
+            "等待时机": {
+                text: `
+                    <p class="mb-4">你分析白猿自语"死期至矣"之言，认为其气数已尽，决定按兵不动，静观其变。每日派人观察白猿动向，自己则操练兵马，等待最佳时机。</p>
+                    <p>数日后，山民来报，见白猿举止异常，常于洞口徘徊叹息，似有大忧。又过数日，见洞中常有火光，隐约闻哭泣之声。</p>
+                    <p class="mb-4">一月后，忽有天雷大作，风雨交加，只见白猿居住的山头火光冲天，伴有阵阵哀号。待雨过天晴，你派人前往探查，只见洞口已塌陷，似被雷击所致。</p>
+                    <p>你闻讯，立即率人前往，挖掘洞口，只见洞内一片狼藉，白猿已被天雷劈死，尸体焦黑。而被掳的妇人们皆幸存无恙，你的妻子亦在其中。</p>
+                    <p class="mb-4">妻子见到你，悲喜交加，告知曰："白猿死前多日便心神不宁，言山神将降罪。昨夜雷雨大作，白猿持剑于洞口相抗，忽被天雷击中，当场毙命。"</p>
+                    <p>你救下众妇人，清点洞中财物，宝器丰积，珍羞盈品，凡人世所珍，靡不充备。有名香数斛，宝劒一双，皆收而有之。</p>
+                    <p class="mt-4">你的妻子归后，十月而生一子，形貌酷似白猿，聪慧绝人。后你为陈武帝所诛，其子为江总所养，免于难。及长，果以文学善书闻名于时，应验了白猿"将逢圣帝，必大其宗"之言。</p>
+                `,
+                image: "https://picsum.photos/id/110/800/400",
+                isEnding: true,
+                endingTitle: "静待时机，白猿自毙"
+            }
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 开始游戏按钮事件
+            document.getElementById('start-btn').addEventListener('click', function() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('game-area').classList.remove('hidden');
+                showStory('开端', ouyangheStory);
+            });
+            
+            // 重新开始按钮事件
+            document.getElementById('restart-btn').addEventListener('click', function() {
+                // 重置游戏状态
+                gameState.character = 'ouyanghe';
+                gameState.chapter = "开端";
+                gameState.courage = 70;
+                gameState.wisdom = 60;
+                gameState.affection = 90;
+                gameState.flags = {};
+                
+                // 更新UI显示
+                document.getElementById('courage').textContent = gameState.courage;
+                document.getElementById('wisdom').textContent = gameState.wisdom;
+                document.getElementById('affection').textContent = gameState.affection;
+                
+                // 切换页面
+                document.getElementById('start-screen').classList.remove('hidden');
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('ending-area').classList.add('hidden');
+            });
+        }
+
+        // 显示故事内容
+        function showStory(chapterId, storyData) {
+            const chapter = storyData[chapterId];
+            if (!chapter) return;
+            
+            gameState.chapter = chapterId;
+            document.getElementById('chapter').textContent = chapterId;
+            
+            // 更新故事文本并添加动画
+            const storyTextElement = document.getElementById('story-text');
+            storyTextElement.innerHTML = chapter.text;
+            storyTextElement.classList.remove('fade-in');
+            void storyTextElement.offsetWidth; // 触发重绘
+            storyTextElement.classList.add('fade-in');
+            
+            // 处理图片显示
+            const imageContainer = document.getElementById('image-container');
+            const storyImage = document.getElementById('story-image');
+            if (chapter.image) {
+                storyImage.src = chapter.image;
+                storyImage.alt = `《白猿传》${chapterId}场景图`;
+                imageContainer.classList.remove('hidden');
+            } else {
+                imageContainer.classList.add('hidden');
+            }
+            
+            // 处理选择按钮或结局
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            if (chapter.isEnding) {
+                // 显示结局
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('ending-area').classList.remove('hidden');
+                document.getElementById('ending-title').textContent = chapter.endingTitle;
+                document.getElementById('ending-text').innerHTML = chapter.text;
+                document.getElementById('story-image').src = chapter.image;
+            } else if (chapter.choices) {
+                // 生成选择按钮
+                chapter.choices.forEach(choice => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-btn bg-primary/90 hover:bg-primary text-light py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 font-story';
+                    button.innerHTML = choice.text;
+                    
+                    button.addEventListener('click', () => {
+                        // 更新属性值
+                        if (choice.courage) {
+                            gameState.courage = Math.max(0, Math.min(100, gameState.courage + choice.courage));
+                            document.getElementById('courage').textContent = gameState.courage;
+                        }
+                        if (choice.wisdom) {
+                            gameState.wisdom = Math.max(0, Math.min(100, gameState.wisdom + choice.wisdom));
+                            document.getElementById('wisdom').textContent = gameState.wisdom;
+                        }
+                        if (choice.affection) {
+                            gameState.affection = Math.max(0, Math.min(100, gameState.affection + choice.affection));
+                            document.getElementById('affection').textContent = gameState.affection;
+                        }
+                        
+                        // 延迟加载下一章，增强体验
+                        setTimeout(() => {
+                            showStory(choice.next, storyData);
+                        }, 300);
+                    });
+                    
+                    choicesContainer.appendChild(button);
+                });
+            }
+        }
+
+        // 页面加载完成后初始化游戏
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
+    
